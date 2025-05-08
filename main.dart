@@ -7,9 +7,8 @@ void main() {
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowTitle('Calculator');
-    setWindowMinSize(const Size(400, 600));
-    setWindowMaxSize(const Size(600, 800));
-    setWindowFrame(const Rect.fromLTWH(100, 100, 420, 680));
+    setWindowMinSize(const Size(300, 500));
+    setWindowMaxSize(Size.infinite); // Allow resizing freely
   }
 
   runApp(const MyApp());
@@ -115,57 +114,68 @@ class _CalculatorState extends State<Calculator> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(title: const Text('Calculator')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Column(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          double buttonFontSize = constraints.maxWidth < 500 ? 18 : 28;  // Adjust button font size
+          double outputFontSize = constraints.maxWidth < 500 ? 28 : 48;  // Adjust output font size
+          double buttonPadding = constraints.maxWidth < 500 ? 6 : 12;  // Reduced padding
+
+          return Column(
             children: [
-              // Display
+              // Display area
               Container(
-                height: 150,
-                alignment: Alignment.centerRight,
                 padding: const EdgeInsets.all(16),
+                alignment: Alignment.centerRight,
+                height: constraints.maxHeight * 0.18, // Display takes 18% of screen height
                 child: Text(
                   output,
-                  style: const TextStyle(fontSize: 48, color: Colors.white),
+                  style: TextStyle(
+                    fontSize: outputFontSize,
+                    color: Colors.white,
+                  ),
                 ),
               ),
+
               // Buttons
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    crossAxisCount: 4,
-                    crossAxisSpacing: 9,
-                    mainAxisSpacing: 9,
-                    childAspectRatio: 1.2,
-                    children: buttons.map((btnText) {
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      crossAxisSpacing: 6,
+                      mainAxisSpacing: 6,
+                      childAspectRatio: constraints.maxWidth / (constraints.maxHeight * 0.8),  // Ensure buttons fit
+                    ),
+                    itemCount: buttons.length,
+                    itemBuilder: (context, index) {
+                      String btnText = buttons[index];
                       bool isOperator = RegExp(r'[\+\-\*\/=]').hasMatch(btnText);
 
                       return ElevatedButton(
                         onPressed: () => onButtonPressed(btnText),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          isOperator ? Colors.orange : Colors.grey[850],
+                          backgroundColor: isOperator
+                              ? Colors.orange
+                              : Colors.grey[850],
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          padding: const EdgeInsets.all(20),
+                          padding: EdgeInsets.all(buttonPadding),
                         ),
                         child: Text(
                           btnText,
-                          style: const TextStyle(fontSize: 28),
+                          style: TextStyle(fontSize: buttonFontSize),
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
               ),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
